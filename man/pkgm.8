@@ -10,7 +10,11 @@ pkgm \[em] declarative package and service manager
 .PP
 \f[B]pkgm\f[R] \f[B]status\f[R]
 .PP
-\f[B]pkgm\f[R] \f[B]reset\f[R] [\f[I]NAME\f[R]\&...]
+\f[B]pkgm\f[R] \f[B]reset\f[R] \f[I]NAME\f[R]\&...
+.PP
+\f[B]pkgm\f[R] \f[B]reset\f[R] \f[B]\[en]all\f[R]
+.PP
+\f[B]pkgm\f[R] \f[B]version\f[R]
 .PP
 \f[B]pkgm\f[R] [\f[B]\-h\f[R]|\f[B]\[en]help\f[R]]
 .PP
@@ -49,6 +53,21 @@ Show the current system state compared to the desired configuration.
 Reports packages as \f[B]OK\f[R], \f[B]MISSING\f[R], \f[B]SKIP\f[R], or
 \f[B]OBSOLETE\f[R], and services as \f[B]ENABLED\f[R],
 \f[B]DISABLED\f[R], \f[B]SKIP\f[R], or \f[B]OBSOLETE\f[R].
+.TP
+\f[B]reset\f[R] \f[I]NAME\f[R]\&...
+Reset cached prompt values by name.
+Removes the specified entries from the state cache so they will be
+prompted again on next \f[B]init\f[R].
+.RS
+.TP
+\f[B]\[en]all\f[R]
+Reset all cached prompt values at once.
+Cannot be mixed with names.
+.RE
+.TP
+\f[B]version\f[R]
+Print program name and version, then exit.
+Same as \f[B]\-V\f[R]/\f[B]\[en]version\f[R].
 .SH OPTIONS
 .TP
 \f[B]\-h\f[R], \f[B]\[en]help\f[R]
@@ -80,8 +99,8 @@ The \f[B]{{.Name}}\f[R] template variable is substituted with the
 package or service name.
 .SS Prompts
 Interactive prompts store user preferences in state.
-Values are available as \f[B]pref\f[R] conditions on packages and
-services.
+Values are available as template variables (e.g., \f[B].laptop\f[R],
+\f[B].nvidia\f[R]) for conditions on packages and services.
 .IP
 .EX
 \f[B][prompts]\f[R]
@@ -169,6 +188,7 @@ missing manager definition.
 .TP
 \f[B]\[ti]/.local/state/pkgm/*.toml\f[R]
 Per\-directory manifest state files.
-The filename is the SHA\-256 hash of the config directory path.
+The filename is the first 16 hex characters (first 8 bytes) of the
+SHA\-256 hash of the config directory path.
 .SH SEE ALSO
 \f[B]gitpkg\f[R](1)

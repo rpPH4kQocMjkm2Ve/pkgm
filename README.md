@@ -10,6 +10,8 @@ pkgm init                # answer prompts (if any)
 pkgm apply               # install desired, remove obsolete
 pkgm apply --dry-run     # preview changes
 pkgm status              # current vs desired state
+pkgm reset laptop        # reset specific prompt
+pkgm reset --all         # reset all cached prompts
 pkgm version             # print version
 ```
 
@@ -73,7 +75,7 @@ services = [
 3. For each package in manifest but not in config: if still installed, runs `remove`
 4. For each service: runs `check` → if not enabled, runs `enable`
 5. For each service in manifest but not in config: if still enabled, runs `disable`
-6. Saves new manifest to `~/.local/state/pkgm/<hash>.toml`
+6. Saves new manifest to `~/.local/state/pkgm/<hash>.toml` (filename is first 8 bytes of SHA-256 hash of config directory path)
 
 ## Adding a manager
 

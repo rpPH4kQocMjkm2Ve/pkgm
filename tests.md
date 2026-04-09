@@ -5,7 +5,7 @@
 | Package | File | What it tests |
 |---------|------|---------------|
 | `internal/config` | `config_test.go` | Config parsing, validation, prompts, mixed package formats |
-| `internal/engine` | `engine_test.go` | Template rendering, `renderName` (plain, conditional true/false, empty), command execution |
+| `internal/engine` | `engine_test.go` | Template rendering, `renderName` (plain, conditional true/false, empty) |
 | `internal/manifest` | `manifest_test.go` | Manifest load/save, atomic writes, state file paths |
 | `internal/prefs` | `prefs_test.go` | State load/save, prompt resolve (bool, string, cached skip), coerceValue, BuildData, FormatPromptValue, askBool retry |
 

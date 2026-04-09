@@ -17,7 +17,11 @@ pkgm — declarative package and service manager
 
 **pkgm** **status**
 
-**pkgm** **reset** [*NAME*...]
+**pkgm** **reset** *NAME*...
+
+**pkgm** **reset** **--all**
+
+**pkgm** **version**
 
 **pkgm** [**-h**|**--help**]
 
@@ -52,6 +56,16 @@ manifest stored in **~/.local/state/pkgm/**.
 :   Show the current system state compared to the desired configuration.
     Reports packages as **OK**, **MISSING**, **SKIP**, or **OBSOLETE**, and
     services as **ENABLED**, **DISABLED**, **SKIP**, or **OBSOLETE**.
+
+**reset** *NAME*...
+:   Reset cached prompt values by name. Removes the specified entries from
+    the state cache so they will be prompted again on next **init**.
+
+    **--all**
+    :   Reset all cached prompt values at once. Cannot be mixed with names.
+
+**version**
+:   Print program name and version, then exit. Same as **-V**/**--version**.
 
 # OPTIONS
 
@@ -90,7 +104,8 @@ service name.
 ## Prompts
 
 Interactive prompts store user preferences in state. Values are available
-as **pref** conditions on packages and services.
+as template variables (e.g., **.laptop**, **.nvidia**) for conditions
+on packages and services.
 
 ```toml
 [prompts]
@@ -175,8 +190,9 @@ Check current state:
 # FILES
 
 **~/.local/state/pkgm/\*.toml**
-:   Per-directory manifest state files. The filename is the SHA-256 hash of
-    the config directory path.
+:   Per-directory manifest state files. The filename is the first 16 hex
+    characters (first 8 bytes) of the SHA-256 hash of the config directory
+    path.
 
 # SEE ALSO
 
