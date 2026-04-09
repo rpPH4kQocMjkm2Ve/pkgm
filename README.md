@@ -1,5 +1,9 @@
 # pkgm
 
+[![CI](https://github.com/rpPH4kQocMjkm2Ve/pkgm/actions/workflows/ci.yml/badge.svg)](https://github.com/rpPH4kQocMjkm2Ve/pkgm/actions/workflows/ci.yml)
+![License](https://img.shields.io/github/license/rpPH4kQocMjkm2Ve/pkgm)
+[![Spec](https://img.shields.io/endpoint?url=https://gitlab.com/fkzys/specs/-/raw/main/version.json&maxAge=300)](https://gitlab.com/fkzys/specs)
+
 Declarative package and service manager. Repository is the source of truth — no local state beyond a manifest for diffing. Zero hardcoded package managers or init systems.
 
 ## Usage
