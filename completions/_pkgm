@@ -1,0 +1,45 @@
+#compdef pkgm
+
+_pkgm() {
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C \
+        '(- *)'{-h,--help}'[Show help]' \
+        '(- *)'{-V,--version}'[Show version]' \
+        '1:command:((
+            init\:"Run prompts, create state cache"
+            apply\:"Install desired, remove obsolete"
+            status\:"Show current vs desired state"
+            reset\:"Reset cached prompt value(s)"
+        ))' \
+        '*::arg:->args' \
+        && return
+
+    case $state in
+        args)
+            case ${words[1]} in
+                init)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show this help]'
+                    ;;
+                apply)
+                    _arguments \
+                        '(-n --dry-run)'{-n,--dry-run}'[Show what would happen without making changes]' \
+                        '(-h --help)'{-h,--help}'[Show this help]'
+                    ;;
+                status)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show this help]'
+                    ;;
+                reset)
+                    _arguments \
+                        '(--all)'--all'[Reset all cached values]' \
+                        '(-h --help)'{-h,--help}'[Show this help]'
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+_pkgm "$@"

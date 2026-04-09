@@ -1,0 +1,258 @@
+package prefs
+
+import (
+	"bufio"
+	"crypto/sha256"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/BurntSushi/toml"
+
+	"pkgm/internal/config"
+)
+
+// State holds cached prompt answers.
+type State struct {
+	Data map[string]any `toml:"data"`
+}
+
+// stateDir returns ~/.local/state/pkgm, creating it if needed.
+func stateDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(home, ".local", "state", "pkgm")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+// stateFile returns the path to the state file for a given config directory.
+// Each config repo gets its own state file, keyed by a hash of its
+// absolute path so multiple repos don't collide.
+func stateFile(configDir string) (string, error) {
+	dir, err := stateDir()
+	if err != nil {
+		return "", err
+	}
+	abs, err := filepath.Abs(configDir)
+	if err != nil {
+		return "", err
+	}
+	h := sha256.Sum256([]byte(abs))
+	name := fmt.Sprintf("%x.toml", h[:8])
+	return filepath.Join(dir, name), nil
+}
+
+// LoadState reads the state file for configDir.
+// Returns an empty state if the file doesn't exist.
+func LoadState(configDir string) (*State, error) {
+	path, err := stateFile(configDir)
+	if err != nil {
+		return nil, err
+	}
+
+	s := &State{
+		Data: make(map[string]any),
+	}
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return s, nil
+	}
+
+	if _, err := toml.DecodeFile(path, s); err != nil {
+		return nil, fmt.Errorf("parse state %s: %w", path, err)
+	}
+
+	if s.Data == nil {
+		s.Data = make(map[string]any)
+	}
+
+	return s, nil
+}
+
+// Save writes the state to disk atomically.
+func (s *State) Save(configDir string) error {
+	path, err := stateFile(configDir)
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, "state-*.tmp")
+	if err != nil {
+		return fmt.Errorf("create temp: %w", err)
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+
+	if err := toml.NewEncoder(tmp).Encode(s); err != nil {
+		tmp.Close()
+		return fmt.Errorf("encode: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("close temp: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, path); err != nil {
+		return fmt.Errorf("rename: %w", err)
+	}
+	return nil
+}
+
+// Resolve ensures all prompts defined in cfg have values in state.
+// Missing values are asked interactively via r/w (typically stdin/stdout).
+// Returns true if any new values were added (state needs saving).
+func Resolve(cfg *config.Config, s *State, r io.Reader, w io.Writer) (bool, error) {
+	if len(cfg.Prompts) == 0 {
+		return false, nil
+	}
+
+	scanner := bufio.NewScanner(r)
+	changed := false
+
+	// Sort keys for deterministic prompt order.
+	names := make([]string, 0, len(cfg.Prompts))
+	for name := range cfg.Prompts {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		p := cfg.Prompts[name]
+
+		if _, exists := s.Data[name]; exists {
+			continue
+		}
+
+		switch p.Type {
+		case "bool":
+			val, err := askBool(scanner, w, p.Question)
+			if err != nil {
+				return changed, err
+			}
+			s.Data[name] = val
+			changed = true
+		case "string":
+			val, err := askString(scanner, w, p.Question)
+			if err != nil {
+				return changed, err
+			}
+			s.Data[name] = val
+			changed = true
+		}
+	}
+
+	return changed, nil
+}
+
+func askBool(scanner *bufio.Scanner, w io.Writer, question string) (bool, error) {
+	for {
+		fmt.Fprintf(w, "%s [y/n]: ", question)
+		if !scanner.Scan() {
+			if err := scanner.Err(); err != nil {
+				return false, err
+			}
+			return false, fmt.Errorf("unexpected end of input")
+		}
+		answer := strings.TrimSpace(strings.ToLower(scanner.Text()))
+		switch answer {
+		case "y", "yes":
+			return true, nil
+		case "n", "no":
+			return false, nil
+		}
+		fmt.Fprintf(w, "  please answer y or n\n")
+	}
+}
+
+func askString(scanner *bufio.Scanner, w io.Writer, question string) (string, error) {
+	fmt.Fprintf(w, "%s: ", question)
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return "", err
+		}
+		return "", fmt.Errorf("unexpected end of input")
+	}
+	return strings.TrimSpace(scanner.Text()), nil
+}
+
+// BuildData merges prompt data with built-in variables.
+func BuildData(s *State) map[string]any {
+	data := make(map[string]any, len(s.Data)+4)
+
+	for k, v := range s.Data {
+		data[k] = coerceValue(v)
+	}
+
+	if home, err := os.UserHomeDir(); err == nil {
+		data["homeDir"] = home
+	}
+	if hostname, err := os.Hostname(); err == nil {
+		data["hostname"] = hostname
+	}
+	username := os.Getenv("USER")
+	if username == "" {
+		username = os.Getenv("LOGNAME")
+	}
+	data["username"] = username
+
+	return data
+}
+
+// coerceValue fixes TOML decode artifacts.
+func coerceValue(v any) any {
+	switch val := v.(type) {
+	case int64:
+		return val
+	case float64:
+		if val == float64(int64(val)) {
+			return int64(val)
+		}
+		return val
+	case string:
+		lower := strings.ToLower(val)
+		if lower == "true" {
+			return true
+		}
+		if lower == "false" {
+			return false
+		}
+		return val
+	default:
+		return v
+	}
+}
+
+// FormatStateFile returns a human-readable identifier for the state file.
+func FormatStateFile(configDir string) string {
+	path, err := stateFile(configDir)
+	if err != nil {
+		return "(unknown)"
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil || !strings.HasPrefix(path, home) {
+		return path
+	}
+	return "~" + path[len(home):]
+}
+
+// FormatPromptValue returns a displayable representation of a prompt value.
+func FormatPromptValue(v any) string {
+	switch val := v.(type) {
+	case bool:
+		return strconv.FormatBool(val)
+	case string:
+		return val
+	default:
+		return fmt.Sprintf("%v", val)
+	}
+}
