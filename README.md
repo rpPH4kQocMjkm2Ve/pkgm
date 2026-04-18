@@ -4,6 +4,9 @@
 ![License](https://img.shields.io/github/license/rpPH4kQocMjkm2Ve/pkgm)
 [![Spec](https://img.shields.io/endpoint?url=https://gitlab.com/fkzys/specs/-/raw/main/version.json&maxAge=300)](https://gitlab.com/fkzys/specs)
 
+> **Deprecated** — pkgm has been merged into [dotm](https://gitlab.com/fkzys/dotm).
+> No further updates will be made. Use dotm instead.
+
 Declarative package and service manager. Repository is the source of truth — no local state beyond a manifest for diffing. Zero hardcoded package managers or init systems.
 
 ## Usage
