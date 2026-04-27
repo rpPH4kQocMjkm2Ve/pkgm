@@ -1,10 +1,10 @@
 # pkgm
 
-[![CI](https://github.com/rpPH4kQocMjkm2Ve/pkgm/actions/workflows/ci.yml/badge.svg)](https://github.com/rpPH4kQocMjkm2Ve/pkgm/actions/workflows/ci.yml)
-![License](https://img.shields.io/github/license/rpPH4kQocMjkm2Ve/pkgm)
-[![Spec](https://img.shields.io/endpoint?url=https://gitlab.com/fkzys/specs/-/raw/main/version.json&maxAge=300)](https://gitlab.com/fkzys/specs)
+[![CI](https://github.com/fkzys/pkgm/actions/workflows/ci.yml/badge.svg)](https://github.com/fkzys/pkgm/actions/workflows/ci.yml)
+![License](https://img.shields.io/github/license/fkzys/pkgm)
+[![Spec](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/fkzys/specs/refs/heads/main/version.json&maxAge=300)](https://github.com/fkzys/specs)
 
-> **Deprecated** — pkgm has been merged into [dotm](https://gitlab.com/fkzys/dotm).
+> **Deprecated** — pkgm has been merged into [dotm](https://github.com/fkzys/dotm).
 > No further updates will be made. Use dotm instead.
 
 Declarative package and service manager. Repository is the source of truth — no local state beyond a manifest for diffing. Zero hardcoded package managers or init systems.
@@ -151,7 +151,7 @@ Types: `bool` (y/n), `string` (free text). Values are cached in
 ## Install
 
 ```bash
-git clone https://gitlab.com/fkzys/pkgm.git
+git clone https://github.com/fkzys/pkgm.git
 cd pkgm
 sudo make install
 ```
